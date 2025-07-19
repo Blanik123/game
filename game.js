@@ -6,10 +6,11 @@ const gameOverElement = document.getElementById('gameOver');
 const finalScoreElement = document.getElementById('finalScore');
 
 // Игровые переменные
-let gameRunning = true;
+let gameRunning = false; // Игра начинается на паузе для показа правил
 let score = 0;
 let totalScore = 0;
 let gameSpeed = 4;
+let firstLaunch = true;
 
 // Самолёт
 const plane = {
@@ -414,12 +415,14 @@ function drawBackground() {
     }
 }
 
-// Функция проверки столкновений
+// Улучшенная функция проверки столкновений с уменьшенным порогом
 function checkCollision(rect1, rect2) {
-    return rect1.x < rect2.x + rect2.width &&
-           rect1.x + rect1.width > rect2.x &&
-           rect1.y < rect2.y + rect2.height &&
-           rect1.y + rect1.height > rect2.y;
+    // Уменьшаем зону столкновения для более точного попадания
+    const margin = 3;
+    return rect1.x + margin < rect2.x + rect2.width - margin &&
+           rect1.x + rect1.width - margin > rect2.x + margin &&
+           rect1.y + margin < rect2.y + rect2.height - margin &&
+           rect1.y + rect1.height - margin > rect2.y + margin;
 }
 
 // Функция обновления игры
@@ -583,6 +586,7 @@ function restartGame() {
     keys.right = false;
     keys.space = false;
     lastShotTime = 0;
+    firstLaunch = false;
     gameOverElement.style.display = 'none';
     scoreElement.textContent = '0';
 }
@@ -594,8 +598,80 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// Функции для работы с меню и модальными окнами
+function toggleMenu() {
+    const menu = document.getElementById('dropdownMenu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+function showRules() {
+    document.getElementById('dropdownMenu').style.display = 'none';
+    document.getElementById('rulesModal').style.display = 'block';
+}
+
+function showInventory() {
+    document.getElementById('dropdownMenu').style.display = 'none';
+    document.getElementById('inventoryModal').style.display = 'block';
+}
+
+function showLeaderboard() {
+    document.getElementById('dropdownMenu').style.display = 'none';
+    // Обновляем лучший результат
+    const bestScore = Math.max(totalScore, localStorage.getItem('bestScore') || 0);
+    localStorage.setItem('bestScore', bestScore);
+    document.getElementById('bestScore').textContent = bestScore;
+    document.getElementById('leaderboardModal').style.display = 'block';
+}
+
+function showShop() {
+    document.getElementById('dropdownMenu').style.display = 'none';
+    document.getElementById('shopModal').style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function startGame() {
+    closeModal('rulesModal');
+    gameRunning = true;
+    firstLaunch = false;
+}
+
+function buyPoints(amount) {
+    alert(`Покупка ${amount} очков пока недоступна. Функция в разработке!`);
+}
+
+// Закрытие меню при клике вне его
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('dropdownMenu');
+    const menuButton = document.getElementById('menuButton');
+    
+    if (!menuButton.contains(event.target) && !menu.contains(event.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+// Закрытие модальных окон при клике вне их
+window.addEventListener('click', function(event) {
+    const modals = ['rulesModal', 'inventoryModal', 'leaderboardModal', 'shopModal'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (event.target === modal) {
+            closeModal(modalId);
+        }
+    });
+});
+
 // Инициализация интерфейса
 document.getElementById('totalScore').textContent = totalScore;
+
+// Показ правил при первом запуске
+if (firstLaunch) {
+    setTimeout(() => {
+        showRules();
+    }, 500);
+}
 
 // Запуск игры
 gameLoop();

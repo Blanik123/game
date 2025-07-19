@@ -119,18 +119,267 @@
                 font-size: 16px;
             }
             
-            .total-score-value {
-                font-size: 28px;
-            }
-        }
+                         .total-score-value {
+                 font-size: 28px;
+             }
+         }
+         
+         /* Меню стили */
+         .menu-button {
+             position: fixed;
+             top: 20px;
+             left: 20px;
+             width: 40px;
+             height: 40px;
+             cursor: pointer;
+             z-index: 1000;
+             background: rgba(255, 255, 255, 0.9);
+             border-radius: 8px;
+             padding: 8px;
+             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+             transition: all 0.3s ease;
+         }
+         
+         .menu-button:hover {
+             background: rgba(255, 255, 255, 1);
+             transform: scale(1.1);
+         }
+         
+         .menu-line {
+             width: 24px;
+             height: 3px;
+             background: #333;
+             margin: 4px 0;
+             border-radius: 2px;
+             transition: 0.3s;
+         }
+         
+         .dropdown-menu {
+             position: fixed;
+             top: 70px;
+             left: 20px;
+             background: rgba(255, 255, 255, 0.95);
+             border-radius: 10px;
+             box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+             display: none;
+             z-index: 999;
+             min-width: 200px;
+             border: 2px solid #4CAF50;
+         }
+         
+         .menu-item {
+             padding: 15px 20px;
+             cursor: pointer;
+             border-bottom: 1px solid #eee;
+             transition: background 0.3s;
+             font-weight: 500;
+         }
+         
+         .menu-item:hover {
+             background: #f0f8f0;
+         }
+         
+         .menu-item:last-child {
+             border-bottom: none;
+         }
+         
+         /* Модальные окна */
+         .modal {
+             display: none;
+             position: fixed;
+             z-index: 1001;
+             left: 0;
+             top: 0;
+             width: 100%;
+             height: 100%;
+             background-color: rgba(0,0,0,0.5);
+             backdrop-filter: blur(5px);
+         }
+         
+         .modal-content {
+             background-color: #fefefe;
+             margin: 5% auto;
+             padding: 30px;
+             border-radius: 15px;
+             width: 80%;
+             max-width: 600px;
+             max-height: 80vh;
+             overflow-y: auto;
+             position: relative;
+             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+         }
+         
+         .close {
+             color: #aaa;
+             float: right;
+             font-size: 28px;
+             font-weight: bold;
+             cursor: pointer;
+             position: absolute;
+             right: 20px;
+             top: 15px;
+         }
+         
+         .close:hover {
+             color: #000;
+         }
+         
+         .rules-content h3 {
+             color: #2E7D32;
+             margin-top: 20px;
+         }
+         
+         .rules-content ul {
+             margin-left: 20px;
+         }
+         
+         .start-button {
+             background: linear-gradient(45deg, #4CAF50, #45a049);
+             color: white;
+             border: none;
+             padding: 15px 30px;
+             border-radius: 10px;
+             cursor: pointer;
+             font-size: 18px;
+             font-weight: bold;
+             margin-top: 20px;
+             width: 100%;
+             transition: transform 0.3s;
+         }
+         
+         .start-button:hover {
+             transform: scale(1.05);
+         }
+         
+         .shop-items {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 15px;
+             margin: 20px 0;
+         }
+         
+         .shop-item {
+             background: #f8f8f8;
+             padding: 20px;
+             border-radius: 10px;
+             text-align: center;
+             border: 2px solid #ddd;
+         }
+         
+         .shop-item h3 {
+             margin-top: 0;
+             color: #2E7D32;
+         }
+         
+         .shop-item button {
+             background: #4CAF50;
+             color: white;
+             border: none;
+             padding: 10px 20px;
+             border-radius: 5px;
+             cursor: pointer;
+         }
     </style>
 </head>
 <body>
+    <!-- Меню в виде трех полосок -->
+    <div class="menu-button" id="menuButton" onclick="toggleMenu()">
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+    </div>
+
+    <!-- Выпадающее меню -->
+    <div class="dropdown-menu" id="dropdownMenu">
+        <div class="menu-item" onclick="showRules()">📖 Правила игры</div>
+        <div class="menu-item" onclick="showInventory()">🎒 Инвентарь</div>
+        <div class="menu-item" onclick="showLeaderboard()">🏆 Лидерборд</div>
+        <div class="menu-item" onclick="showShop()">💰 Магазин очков</div>
+    </div>
+
     <!-- Общий счёт вынесен на фон -->
     <div class="total-score-container">
         <h3>🏆 Общий счёт</h3>
         <div class="total-score-value" id="totalScore">0</div>
         <p>очков за все игры</p>
+    </div>
+
+    <!-- Модальное окно правил игры -->
+    <div class="modal" id="rulesModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rulesModal')">&times;</span>
+            <h2>📖 Правила игры</h2>
+            <div class="rules-content">
+                <h3>🎮 Управление:</h3>
+                <p><strong>A/D</strong> или <strong>← →</strong> - движение влево/вправо</p>
+                <p><strong>ПРОБЕЛ</strong> - стрельба</p>
+                
+                <h3>🎯 Цель игры:</h3>
+                <p>Уничтожайте грозовые облака и избегайте препятствий!</p>
+                
+                <h3>⚡ Система очков:</h3>
+                <p>🌩️ <strong>Грозовые облака (тёмные):</strong></p>
+                <ul>
+                    <li>Столкновение = Game Over</li>
+                    <li>Уклонение = +1 очко</li>
+                    <li>Уничтожение и сбор звёздочки = +15 очков</li>
+                </ul>
+                
+                <p>☁️ <strong>Обычные облака (светлые):</strong></p>
+                <ul>
+                    <li>Столкновение = -5 очков урона</li>
+                    <li>Нельзя уничтожить пулями</li>
+                </ul>
+                
+                <h3>🏆 Прогресс:</h3>
+                <p>Очки накапливаются между играми в общий счёт!</p>
+            </div>
+            <button class="start-button" onclick="startGame()">🚀 Начать игру!</button>
+        </div>
+    </div>
+
+    <!-- Модальные окна для других разделов -->
+    <div class="modal" id="inventoryModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('inventoryModal')">&times;</span>
+            <h2>🎒 Инвентарь</h2>
+            <p>Здесь будут отображаться ваши достижения и предметы!</p>
+            <p><em>Функция в разработке...</em></p>
+        </div>
+    </div>
+
+    <div class="modal" id="leaderboardModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('leaderboardModal')">&times;</span>
+            <h2>🏆 Лидерборд</h2>
+            <p>Ваш лучший результат: <span id="bestScore">0</span> очков</p>
+            <p><em>Глобальный лидерборд в разработке...</em></p>
+        </div>
+    </div>
+
+    <div class="modal" id="shopModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('shopModal')">&times;</span>
+            <h2>💰 Магазин очков</h2>
+            <div class="shop-items">
+                <div class="shop-item">
+                    <h3>💎 100 очков</h3>
+                    <p>Стоимость: $0.99</p>
+                    <button onclick="buyPoints(100)">Купить</button>
+                </div>
+                <div class="shop-item">
+                    <h3>💎 500 очков</h3>
+                    <p>Стоимость: $3.99</p>
+                    <button onclick="buyPoints(500)">Купить</button>
+                </div>
+                <div class="shop-item">
+                    <h3>💎 1000 очков</h3>
+                    <p>Стоимость: $6.99</p>
+                    <button onclick="buyPoints(1000)">Купить</button>
+                </div>
+            </div>
+            <p><em>Покупки в разработке...</em></p>
+        </div>
     </div>
 
     <div class="game-container">
