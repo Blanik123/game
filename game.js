@@ -16,11 +16,14 @@ const plane = {
     y: canvas.height - 100,
     width: 50,
     height: 30,
-    speed: 5
+    speed: 8
 };
 
 // Массив облаков
 let clouds = [];
+
+// Массив обычных облаков
+let normalClouds = [];
 
 // Массив пуль
 let bullets = [];
@@ -75,16 +78,28 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-// Функция создания облака
+// Функция создания грозового облака
 function createCloud() {
     const cloud = {
-        x: Math.random() * (canvas.width - 80),
+        x: Math.random() * (canvas.width - 60),
         y: -50,
-        width: 80,
-        height: 60,
+        width: 60,
+        height: 45,
         speed: gameSpeed
     };
     clouds.push(cloud);
+}
+
+// Функция создания обычного облака
+function createNormalCloud() {
+    const cloud = {
+        x: Math.random() * (canvas.width - 70),
+        y: -50,
+        width: 70,
+        height: 50,
+        speed: gameSpeed
+    };
+    normalClouds.push(cloud);
 }
 
 // Функция создания пули
@@ -110,7 +125,7 @@ function createStar(x, y) {
         y: y,
         width: 20,
         height: 20,
-        speed: 2,
+        speed: gameSpeed,
         collected: false
     };
     stars.push(star);
@@ -301,6 +316,37 @@ function drawStar(star) {
     ctx.restore();
 }
 
+// Функция отрисовки обычного облака
+function drawNormalCloud(cloud) {
+    ctx.save();
+    
+    // Светло-серое обычное облако
+    ctx.fillStyle = '#B0C4DE';
+    ctx.beginPath();
+    
+    // Создаём форму облака из кругов
+    const centerX = cloud.x + cloud.width / 2;
+    const centerY = cloud.y + cloud.height / 2;
+    
+    ctx.arc(cloud.x + 12, centerY, 12, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 28, centerY - 4, 15, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 45, centerY, 13, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 20, centerY - 8, 10, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 37, centerY - 10, 12, 0, Math.PI * 2);
+    
+    ctx.fill();
+    
+    // Тень облака
+    ctx.fillStyle = '#9FB6CD';
+    ctx.beginPath();
+    ctx.arc(cloud.x + 15, centerY + 2, 8, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 30, centerY + 1, 10, 0, Math.PI * 2);
+    ctx.arc(cloud.x + 42, centerY + 2, 9, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+}
+
 // Функция отрисовки облака (грозы)
 function drawCloud(cloud) {
     ctx.save();
@@ -380,8 +426,13 @@ function update() {
     }
     
     // Создание облаков
-    if (Math.random() < 0.02) {
+    if (Math.random() < 0.015) {
         createCloud();
+    }
+    
+    // Создание обычных облаков
+    if (Math.random() < 0.02) {
+        createNormalCloud();
     }
     
     // Обновление пуль
@@ -430,6 +481,24 @@ function update() {
         }
     }
     
+    // Обновление обычных облаков
+    for (let i = normalClouds.length - 1; i >= 0; i--) {
+        normalClouds[i].y += normalClouds[i].speed;
+        
+        // Проверка столкновения с самолётом (урон)
+        if (checkCollision(plane, normalClouds[i])) {
+            score -= 5;
+            if (score < 0) score = 0;
+            normalClouds.splice(i, 1);
+            continue;
+        }
+        
+        // Удаление облаков за пределами экрана
+        if (normalClouds[i].y > canvas.height) {
+            normalClouds.splice(i, 1);
+        }
+    }
+
     // Обновление звёздочек
     for (let i = stars.length - 1; i >= 0; i--) {
         // Движение звёздочки вниз
@@ -459,8 +528,11 @@ function draw() {
     // Отрисовка фона
     drawBackground();
     
-    // Отрисовка облаков
+    // Отрисовка грозовых облаков
     clouds.forEach(cloud => drawCloud(cloud));
+    
+    // Отрисовка обычных облаков
+    normalClouds.forEach(cloud => drawNormalCloud(cloud));
     
     // Отрисовка пуль
     bullets.forEach(bullet => drawBullet(bullet));
@@ -486,6 +558,7 @@ function restartGame() {
     gameSpeed = 4;
     plane.x = canvas.width / 2 - 25;
     clouds = [];
+    normalClouds = [];
     bullets = [];
     stars = [];
     keys.left = false;
