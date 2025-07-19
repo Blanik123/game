@@ -8,6 +8,7 @@ const finalScoreElement = document.getElementById('finalScore');
 // Игровые переменные
 let gameRunning = true;
 let score = 0;
+let totalScore = 0;
 let gameSpeed = 4;
 
 // Самолёт
@@ -41,6 +42,19 @@ const keys = {
 // Переменная для контроля стрельбы
 let lastShotTime = 0;
 const shotCooldown = 200; // миллисекунды
+
+// Функции для работы с общим счётом
+function loadTotalScore() {
+    const saved = localStorage.getItem('planeGameTotalScore');
+    return saved ? parseInt(saved) : 0;
+}
+
+function saveTotalScore(score) {
+    localStorage.setItem('planeGameTotalScore', score.toString());
+}
+
+// Загружаем общий счёт при запуске
+totalScore = loadTotalScore();
 
 // Обработка нажатий клавиш
 document.addEventListener('keydown', (e) => {
@@ -431,7 +445,7 @@ function update() {
     }
     
     // Создание обычных облаков
-    if (Math.random() < 0.02) {
+    if (Math.random() < 0.01) {
         createNormalCloud();
     }
     
@@ -472,7 +486,7 @@ function update() {
         // Удаление облаков за пределами экрана
         if (clouds[i].y > canvas.height) {
             clouds.splice(i, 1);
-            score += 10;
+            score += 1;
             
             // Увеличение скорости игры
             if (score % 100 === 0) {
@@ -518,6 +532,7 @@ function update() {
     
     // Обновление счёта
     scoreElement.textContent = score;
+    document.getElementById('totalScore').textContent = totalScore;
 }
 
 // Функция отрисовки
@@ -547,7 +562,10 @@ function draw() {
 // Функция окончания игры
 function gameOver() {
     gameRunning = false;
+    totalScore += score;
+    saveTotalScore(totalScore);
     finalScoreElement.textContent = score;
+    document.getElementById('totalScore').textContent = totalScore;
     gameOverElement.style.display = 'block';
 }
 
@@ -575,6 +593,9 @@ function gameLoop() {
     draw();
     requestAnimationFrame(gameLoop);
 }
+
+// Инициализация интерфейса
+document.getElementById('totalScore').textContent = totalScore;
 
 // Запуск игры
 gameLoop();
