@@ -8,7 +8,7 @@ const finalScoreElement = document.getElementById('finalScore');
 // Игровые переменные
 let gameRunning = true;
 let score = 0;
-let gameSpeed = 2;
+let gameSpeed = 4;
 
 // Самолёт
 const plane = {
@@ -22,11 +22,22 @@ const plane = {
 // Массив облаков
 let clouds = [];
 
+// Массив пуль
+let bullets = [];
+
+// Массив звёздочек
+let stars = [];
+
 // Клавиши
 const keys = {
     left: false,
-    right: false
+    right: false,
+    space: false
 };
+
+// Переменная для контроля стрельбы
+let lastShotTime = 0;
+const shotCooldown = 200; // миллисекунды
 
 // Обработка нажатий клавиш
 document.addEventListener('keydown', (e) => {
@@ -41,6 +52,10 @@ document.addEventListener('keydown', (e) => {
             keys.right = true;
             e.preventDefault();
             break;
+        case 'Space':
+            keys.space = true;
+            e.preventDefault();
+            break;
     }
 });
 
@@ -53,6 +68,9 @@ document.addEventListener('keyup', (e) => {
         case 'KeyD':
         case 'ArrowRight':
             keys.right = false;
+            break;
+        case 'Space':
+            keys.space = false;
             break;
     }
 });
@@ -69,34 +87,152 @@ function createCloud() {
     clouds.push(cloud);
 }
 
-// Функция отрисовки самолёта
+// Функция создания пули
+function createBullet() {
+    const currentTime = Date.now();
+    if (currentTime - lastShotTime > shotCooldown) {
+        const bullet = {
+            x: plane.x + plane.width / 2 - 2,
+            y: plane.y,
+            width: 4,
+            height: 10,
+            speed: 8
+        };
+        bullets.push(bullet);
+        lastShotTime = currentTime;
+    }
+}
+
+// Функция создания звёздочки
+function createStar(x, y) {
+    const star = {
+        x: x,
+        y: y,
+        width: 20,
+        height: 20,
+        collected: false
+    };
+    stars.push(star);
+}
+
+// Функция отрисовки военного самолёта
 function drawPlane() {
     ctx.save();
     
-    // Корпус самолёта
-    ctx.fillStyle = '#C0C0C0';
-    ctx.fillRect(plane.x + 20, plane.y + 10, 10, 20);
+    // Основной корпус (более угловатый)
+    ctx.fillStyle = '#4A4A4A';
+    ctx.fillRect(plane.x + 18, plane.y + 8, 14, 22);
     
-    // Крылья
-    ctx.fillStyle = '#A0A0A0';
-    ctx.fillRect(plane.x + 5, plane.y + 15, 40, 8);
-    
-    // Нос самолёта
-    ctx.fillStyle = '#808080';
+    // Нос самолёта (острый)
+    ctx.fillStyle = '#333333';
     ctx.beginPath();
     ctx.moveTo(plane.x + 25, plane.y);
-    ctx.lineTo(plane.x + 20, plane.y + 10);
-    ctx.lineTo(plane.x + 30, plane.y + 10);
+    ctx.lineTo(plane.x + 18, plane.y + 8);
+    ctx.lineTo(plane.x + 32, plane.y + 8);
     ctx.closePath();
     ctx.fill();
     
-    // Хвост
-    ctx.fillStyle = '#606060';
-    ctx.fillRect(plane.x + 22, plane.y + 25, 6, 5);
+    // Крылья (более широкие)
+    ctx.fillStyle = '#5A5A5A';
+    ctx.fillRect(plane.x + 2, plane.y + 16, 46, 6);
     
-    // Окна
-    ctx.fillStyle = '#4169E1';
-    ctx.fillRect(plane.x + 23, plane.y + 12, 4, 3);
+    // Вооружение на крыльях
+    ctx.fillStyle = '#2F2F2F';
+    ctx.fillRect(plane.x + 10, plane.y + 14, 4, 10);
+    ctx.fillRect(plane.x + 36, plane.y + 14, 4, 10);
+    
+    // Хвост и стабилизаторы
+    ctx.fillStyle = '#4A4A4A';
+    ctx.fillRect(plane.x + 22, plane.y + 26, 6, 4);
+    ctx.fillRect(plane.x + 20, plane.y + 24, 10, 2);
+    
+    // Кабина пилота
+    ctx.fillStyle = '#1E90FF';
+    ctx.fillRect(plane.x + 22, plane.y + 10, 6, 6);
+    
+    // Камуфляжные полосы
+    ctx.fillStyle = '#3A3A3A';
+    ctx.fillRect(plane.x + 20, plane.y + 12, 10, 2);
+    ctx.fillRect(plane.x + 24, plane.y + 20, 2, 4);
+    
+    // Звезда (военная маркировка)
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    const centerX = plane.x + 8;
+    const centerY = plane.y + 19;
+    for (let i = 0; i < 5; i++) {
+        const angle = (i * 144 - 90) * Math.PI / 180;
+        const x = centerX + Math.cos(angle) * 3;
+        const y = centerY + Math.sin(angle) * 3;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
+}
+
+// Функция отрисовки пули
+function drawBullet(bullet) {
+    ctx.save();
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    
+    // Добавляем светящийся эффект
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 3;
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    
+    ctx.restore();
+}
+
+// Функция отрисовки звёздочки
+function drawStar(star) {
+    ctx.save();
+    
+    const centerX = star.x + star.width / 2;
+    const centerY = star.y + star.height / 2;
+    
+    // Анимация вращения
+    const rotation = Date.now() * 0.005;
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotation);
+    
+    // Звёздочка
+    ctx.fillStyle = '#FFD700';
+    ctx.strokeStyle = '#FFA500';
+    ctx.lineWidth = 2;
+    
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+        const angle = (i * 144) * Math.PI / 180;
+        const x = Math.cos(angle) * 8;
+        const y = Math.sin(angle) * 8;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Внутренняя звёздочка
+    ctx.fillStyle = '#FFFF00';
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+        const angle = (i * 144) * Math.PI / 180;
+        const x = Math.cos(angle) * 4;
+        const y = Math.sin(angle) * 4;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    
+    // Светящийся эффект
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 8;
+    ctx.fill();
     
     ctx.restore();
 }
@@ -174,16 +310,45 @@ function update() {
         plane.x += plane.speed;
     }
     
+    // Стрельба
+    if (keys.space) {
+        createBullet();
+    }
+    
     // Создание облаков
     if (Math.random() < 0.02) {
         createCloud();
+    }
+    
+    // Обновление пуль
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+        
+        // Удаление пуль за пределами экрана
+        if (bullets[i].y < 0) {
+            bullets.splice(i, 1);
+            continue;
+        }
+        
+        // Проверка столкновения пуль с облаками
+        for (let j = clouds.length - 1; j >= 0; j--) {
+            if (checkCollision(bullets[i], clouds[j])) {
+                // Создаём звёздочку на месте уничтоженного облака
+                createStar(clouds[j].x + clouds[j].width / 2 - 10, clouds[j].y + clouds[j].height / 2 - 10);
+                
+                // Удаляем облако и пулю
+                clouds.splice(j, 1);
+                bullets.splice(i, 1);
+                break;
+            }
+        }
     }
     
     // Обновление облаков
     for (let i = clouds.length - 1; i >= 0; i--) {
         clouds[i].y += clouds[i].speed;
         
-        // Проверка столкновения
+        // Проверка столкновения с самолётом
         if (checkCollision(plane, clouds[i])) {
             gameOver();
             return;
@@ -198,6 +363,20 @@ function update() {
             if (score % 100 === 0) {
                 gameSpeed += 0.5;
             }
+        }
+    }
+    
+    // Обновление звёздочек
+    for (let i = stars.length - 1; i >= 0; i--) {
+        // Проверка сбора звёздочки
+        if (checkCollision(plane, stars[i]) && !stars[i].collected) {
+            stars[i].collected = true;
+            score += 15;
+            stars.splice(i, 1);
+        }
+        // Удаление звёздочек, которые упали слишком низко
+        else if (stars[i].y > canvas.height) {
+            stars.splice(i, 1);
         }
     }
     
@@ -216,6 +395,12 @@ function draw() {
     // Отрисовка облаков
     clouds.forEach(cloud => drawCloud(cloud));
     
+    // Отрисовка пуль
+    bullets.forEach(bullet => drawBullet(bullet));
+    
+    // Отрисовка звёздочек
+    stars.forEach(star => drawStar(star));
+    
     // Отрисовка самолёта
     drawPlane();
 }
@@ -231,11 +416,15 @@ function gameOver() {
 function restartGame() {
     gameRunning = true;
     score = 0;
-    gameSpeed = 2;
+    gameSpeed = 4;
     plane.x = canvas.width / 2 - 25;
     clouds = [];
+    bullets = [];
+    stars = [];
     keys.left = false;
     keys.right = false;
+    keys.space = false;
+    lastShotTime = 0;
     gameOverElement.style.display = 'none';
     scoreElement.textContent = '0';
 }
