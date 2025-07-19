@@ -96,7 +96,7 @@ function createBullet() {
             y: plane.y,
             width: 4,
             height: 10,
-            speed: 8
+            speed: 15
         };
         bullets.push(bullet);
         lastShotTime = currentTime;
@@ -110,6 +110,7 @@ function createStar(x, y) {
         y: y,
         width: 20,
         height: 20,
+        speed: 2,
         collected: false
     };
     stars.push(star);
@@ -119,56 +120,119 @@ function createStar(x, y) {
 function drawPlane() {
     ctx.save();
     
-    // Основной корпус (более угловатый)
-    ctx.fillStyle = '#4A4A4A';
-    ctx.fillRect(plane.x + 18, plane.y + 8, 14, 22);
+    // Основной корпус (улучшенный дизайн)
+    ctx.fillStyle = '#606060';
+    ctx.fillRect(plane.x + 16, plane.y + 6, 18, 24);
     
-    // Нос самолёта (острый)
-    ctx.fillStyle = '#333333';
+    // Градиент для объёма корпуса
+    const gradient = ctx.createLinearGradient(plane.x + 16, plane.y + 6, plane.x + 34, plane.y + 6);
+    gradient.addColorStop(0, '#707070');
+    gradient.addColorStop(0.5, '#606060');
+    gradient.addColorStop(1, '#505050');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(plane.x + 16, plane.y + 6, 18, 24);
+    
+    // Нос самолёта (более острый и детализированный)
+    ctx.fillStyle = '#404040';
     ctx.beginPath();
     ctx.moveTo(plane.x + 25, plane.y);
-    ctx.lineTo(plane.x + 18, plane.y + 8);
-    ctx.lineTo(plane.x + 32, plane.y + 8);
+    ctx.lineTo(plane.x + 16, plane.y + 6);
+    ctx.lineTo(plane.x + 20, plane.y + 8);
+    ctx.lineTo(plane.x + 25, plane.y + 3);
+    ctx.lineTo(plane.x + 30, plane.y + 8);
+    ctx.lineTo(plane.x + 34, plane.y + 6);
     ctx.closePath();
     ctx.fill();
     
-    // Крылья (более широкие)
-    ctx.fillStyle = '#5A5A5A';
-    ctx.fillRect(plane.x + 2, plane.y + 16, 46, 6);
+    // Крылья (современный дизайн)
+    const wingGradient = ctx.createLinearGradient(plane.x, plane.y + 14, plane.x + 50, plane.y + 14);
+    wingGradient.addColorStop(0, '#708090');
+    wingGradient.addColorStop(0.5, '#778899');
+    wingGradient.addColorStop(1, '#708090');
+    ctx.fillStyle = wingGradient;
+    ctx.fillRect(plane.x, plane.y + 14, 50, 8);
     
-    // Вооружение на крыльях
+    // Детали крыльев
+    ctx.fillStyle = '#556B7D';
+    ctx.fillRect(plane.x + 2, plane.y + 16, 46, 2);
+    ctx.fillRect(plane.x + 5, plane.y + 19, 40, 1);
+    
+    // Современное вооружение
     ctx.fillStyle = '#2F2F2F';
-    ctx.fillRect(plane.x + 10, plane.y + 14, 4, 10);
-    ctx.fillRect(plane.x + 36, plane.y + 14, 4, 10);
+    ctx.fillRect(plane.x + 8, plane.y + 12, 6, 12);
+    ctx.fillRect(plane.x + 36, plane.y + 12, 6, 12);
     
-    // Хвост и стабилизаторы
+    // Детали вооружения
+    ctx.fillStyle = '#1F1F1F';
+    ctx.fillRect(plane.x + 9, plane.y + 13, 4, 2);
+    ctx.fillRect(plane.x + 37, plane.y + 13, 4, 2);
+    
+    // Хвост и стабилизаторы (улучшенные)
+    ctx.fillStyle = '#5A5A5A';
+    ctx.fillRect(plane.x + 20, plane.y + 26, 10, 4);
+    ctx.fillRect(plane.x + 18, plane.y + 22, 14, 3);
+    
+    // Вертикальный стабилизатор
+    ctx.fillStyle = '#505050';
+    ctx.fillRect(plane.x + 23, plane.y + 18, 4, 8);
+    
+    // Кабина пилота (более реалистичная)
+    const cockpitGradient = ctx.createRadialGradient(plane.x + 25, plane.y + 12, 0, plane.x + 25, plane.y + 12, 8);
+    cockpitGradient.addColorStop(0, '#4169E1');
+    cockpitGradient.addColorStop(0.7, '#1E40AF');
+    cockpitGradient.addColorStop(1, '#1E3A8A');
+    ctx.fillStyle = cockpitGradient;
+    ctx.fillRect(plane.x + 20, plane.y + 8, 10, 8);
+    
+    // Отражение на кабине
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(plane.x + 21, plane.y + 9, 3, 2);
+    
+    // Камуфляжные полосы (более реалистичные)
     ctx.fillStyle = '#4A4A4A';
-    ctx.fillRect(plane.x + 22, plane.y + 26, 6, 4);
-    ctx.fillRect(plane.x + 20, plane.y + 24, 10, 2);
+    ctx.fillRect(plane.x + 18, plane.y + 10, 6, 2);
+    ctx.fillRect(plane.x + 26, plane.y + 10, 6, 2);
+    ctx.fillRect(plane.x + 22, plane.y + 18, 6, 2);
     
-    // Кабина пилота
-    ctx.fillStyle = '#1E90FF';
-    ctx.fillRect(plane.x + 22, plane.y + 10, 6, 6);
-    
-    // Камуфляжные полосы
-    ctx.fillStyle = '#3A3A3A';
-    ctx.fillRect(plane.x + 20, plane.y + 12, 10, 2);
-    ctx.fillRect(plane.x + 24, plane.y + 20, 2, 4);
-    
-    // Звезда (военная маркировка)
+    // Звезда (военная маркировка) - более яркая
     ctx.fillStyle = '#FFD700';
+    ctx.strokeStyle = '#FFA500';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    const centerX = plane.x + 8;
-    const centerY = plane.y + 19;
+    const centerX = plane.x + 6;
+    const centerY = plane.y + 17;
     for (let i = 0; i < 5; i++) {
         const angle = (i * 144 - 90) * Math.PI / 180;
-        const x = centerX + Math.cos(angle) * 3;
-        const y = centerY + Math.sin(angle) * 3;
+        const x = centerX + Math.cos(angle) * 4;
+        const y = centerY + Math.sin(angle) * 4;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
     }
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    
+    // Двигатели (реактивные сопла)
+    ctx.fillStyle = '#2F2F2F';
+    ctx.fillRect(plane.x + 12, plane.y + 24, 4, 6);
+    ctx.fillRect(plane.x + 34, plane.y + 24, 4, 6);
+    
+    // Огонь из двигателей
+    ctx.fillStyle = '#FF6B35';
+    ctx.fillRect(plane.x + 13, plane.y + 28, 2, 3);
+    ctx.fillRect(plane.x + 35, plane.y + 28, 2, 3);
+    
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(plane.x + 13.5, plane.y + 29, 1, 2);
+    ctx.fillRect(plane.x + 35.5, plane.y + 29, 1, 2);
+    
+    // Антенны и детали
+    ctx.strokeStyle = '#808080';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(plane.x + 25, plane.y + 6);
+    ctx.lineTo(plane.x + 25, plane.y + 4);
+    ctx.stroke();
     
     ctx.restore();
 }
@@ -368,6 +432,9 @@ function update() {
     
     // Обновление звёздочек
     for (let i = stars.length - 1; i >= 0; i--) {
+        // Движение звёздочки вниз
+        stars[i].y += stars[i].speed;
+        
         // Проверка сбора звёздочки
         if (checkCollision(plane, stars[i]) && !stars[i].collected) {
             stars[i].collected = true;
