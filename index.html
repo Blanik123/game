@@ -69,13 +69,73 @@
         button:hover {
             background: #45a049;
         }
+        
+        .total-score-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 180px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .total-score-container h3 {
+            margin: 0 0 10px 0;
+            color: #2E7D32;
+            font-size: 18px;
+        }
+        
+        .total-score-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1B5E20;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 10px 0;
+            background: linear-gradient(45deg, #4CAF50, #2E7D32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .total-score-container p {
+            margin: 0;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 900px) {
+            .total-score-container {
+                top: 10px;
+                right: 10px;
+                padding: 15px;
+                min-width: 140px;
+            }
+            
+            .total-score-container h3 {
+                font-size: 16px;
+            }
+            
+            .total-score-value {
+                font-size: 28px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Общий счёт вынесен на фон -->
+    <div class="total-score-container">
+        <h3>🏆 Общий счёт</h3>
+        <div class="total-score-value" id="totalScore">0</div>
+        <p>очков за все игры</p>
+    </div>
+
     <div class="game-container">
         <div class="score">
-            Счёт за игру: <span id="score">0</span> | 
-            Общий счёт: <span id="totalScore">0</span>
+            Счёт за игру: <span id="score">0</span>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div class="controls">
@@ -89,7 +149,7 @@
         <div class="game-over" id="gameOver">
             <h2>Игра окончена!</h2>
             <p>Счёт за игру: <span id="finalScore">0</span></p>
-            <p>Общий счёт: <span id="totalScore">0</span></p>
+            <p>Общий счёт обновлён! 🏆</p>
             <button onclick="restartGame()">Играть снова</button>
         </div>
     </div>
