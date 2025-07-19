@@ -101,11 +101,36 @@
             background-clip: text;
         }
         
-        .total-score-container p {
-            margin: 0;
-            color: #666;
-            font-size: 12px;
-        }
+                 .total-score-container p {
+             margin: 0;
+             color: #666;
+             font-size: 12px;
+         }
+         
+         .level-info {
+             margin-top: 10px;
+             padding: 5px;
+             background: rgba(76, 175, 80, 0.1);
+             border-radius: 5px;
+             color: #2E7D32;
+         }
+         
+         .notification {
+             position: fixed;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             background: rgba(76, 175, 80, 0.95);
+             color: white;
+             padding: 20px;
+             border-radius: 10px;
+             font-size: 18px;
+             font-weight: bold;
+             z-index: 1002;
+             display: none;
+             text-align: center;
+             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+         }
         
         @media (max-width: 900px) {
             .total-score-container {
@@ -149,9 +174,10 @@
              width: 24px;
              height: 3px;
              background: #333;
-             margin: 4px 0;
+             margin: 4px auto;
              border-radius: 2px;
              transition: 0.3s;
+             display: block;
          }
          
          .dropdown-menu {
@@ -271,13 +297,68 @@
              color: #2E7D32;
          }
          
-         .shop-item button {
+         .shop-item button, .upgrade-item button {
              background: #4CAF50;
              color: white;
              border: none;
              padding: 10px 20px;
              border-radius: 5px;
              cursor: pointer;
+             transition: background 0.3s;
+         }
+         
+         .shop-item button:hover, .upgrade-item button:hover {
+             background: #45a049;
+         }
+         
+         .upgrade-section {
+             margin-top: 20px;
+             border-top: 2px solid #eee;
+             padding-top: 20px;
+         }
+         
+         .upgrade-item {
+             background: #f0f8f0;
+             padding: 15px;
+             border-radius: 8px;
+             margin: 10px 0;
+             border: 2px solid #4CAF50;
+         }
+         
+         .upgrade-item h4 {
+             margin-top: 0;
+             color: #2E7D32;
+         }
+         
+         .planes-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+             gap: 15px;
+             margin: 20px 0;
+         }
+         
+         .plane-card {
+             background: #f8f8f8;
+             padding: 20px;
+             border-radius: 10px;
+             text-align: center;
+             border: 2px solid #ddd;
+             transition: all 0.3s;
+         }
+         
+         .plane-card.owned {
+             border-color: #4CAF50;
+             background: #f0f8f0;
+         }
+         
+         .plane-card.selected {
+             border-color: #2196F3;
+             background: #e3f2fd;
+         }
+         
+         .plane-card h4 {
+             margin-top: 0;
+             color: #2E7D32;
          }
     </style>
 </head>
@@ -294,7 +375,10 @@
         <div class="menu-item" onclick="showRules()">📖 Правила игры</div>
         <div class="menu-item" onclick="showInventory()">🎒 Инвентарь</div>
         <div class="menu-item" onclick="showLeaderboard()">🏆 Лидерборд</div>
-        <div class="menu-item" onclick="showShop()">💰 Магазин очков</div>
+        <div class="menu-item" onclick="showShop()">💰 Магазин</div>
+        <div class="menu-item" onclick="showHangar()">✈️ Ангар</div>
+        <hr style="margin: 5px 0; border: 1px solid #eee;">
+        <div class="menu-item" onclick="clearProgress()" style="color: #d32f2f;">🗑️ Удалить прогресс</div>
     </div>
 
     <!-- Общий счёт вынесен на фон -->
@@ -302,6 +386,9 @@
         <h3>🏆 Общий счёт</h3>
         <div class="total-score-value" id="totalScore">0</div>
         <p>очков за все игры</p>
+        <div class="level-info">
+            <strong>Уровень <span id="playerLevel">1</span></strong>
+        </div>
     </div>
 
     <!-- Модальное окно правил игры -->
@@ -360,27 +447,54 @@
     <div class="modal" id="shopModal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('shopModal')">&times;</span>
-            <h2>💰 Магазин очков</h2>
+            <h2>💰 Магазин</h2>
+            <h3>💎 Очки</h3>
             <div class="shop-items">
                 <div class="shop-item">
-                    <h3>💎 100 очков</h3>
+                    <h4>💎 100 очков</h4>
                     <p>Стоимость: $0.99</p>
                     <button onclick="buyPoints(100)">Купить</button>
                 </div>
                 <div class="shop-item">
-                    <h3>💎 500 очков</h3>
+                    <h4>💎 500 очков</h4>
                     <p>Стоимость: $3.99</p>
                     <button onclick="buyPoints(500)">Купить</button>
                 </div>
                 <div class="shop-item">
-                    <h3>💎 1000 очков</h3>
+                    <h4>💎 1000 очков</h4>
                     <p>Стоимость: $6.99</p>
                     <button onclick="buyPoints(1000)">Купить</button>
                 </div>
             </div>
-            <p><em>Покупки в разработке...</em></p>
+            <h3>⬆️ Улучшения стартового самолёта</h3>
+            <div class="upgrade-section" id="upgradeSection">
+                <div class="upgrade-item">
+                    <h4>🚀 Скорость (+1)</h4>
+                    <p>Стоимость: <span id="speedUpgradeCost">10</span> очков</p>
+                    <button onclick="upgradeSpeed()">Улучшить</button>
+                </div>
+                <div class="upgrade-item">
+                    <h4>⚡ Скорострельность</h4>
+                    <p>Стоимость: <span id="fireRateUpgradeCost">15</span> очков</p>
+                    <button onclick="upgradeFireRate()">Улучшить</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="modal" id="hangarModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('hangarModal')">&times;</span>
+            <h2>✈️ Ангар самолётов</h2>
+            <p>Текущий самолёт: <strong id="currentPlaneText">Стартовый истребитель</strong></p>
+            <div class="planes-grid" id="planesGrid">
+                <!-- Самолёты будут добавлены через JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомления -->
+    <div class="notification" id="notification"></div>
 
     <div class="game-container">
         <div class="score">

@@ -11,6 +11,46 @@ let score = 0;
 let totalScore = 0;
 let gameSpeed = 4;
 let firstLaunch = true;
+let playerLevel = 1;
+let currentPlane = 0; // Индекс текущего самолёта
+
+// Улучшения стартового самолёта
+let planeUpgrades = {
+    speed: 0,
+    fireRate: 0
+};
+
+// Данные самолётов
+const planes = [
+    {
+        name: "Стартовый истребитель",
+        baseSpeed: 5, // Слабая ракета на 1 уровне
+        requiredLevel: 1,
+        cost: 0,
+        owned: true
+    },
+    {
+        name: "Быстрый перехватчик",
+        baseSpeed: 7,
+        requiredLevel: 5,
+        cost: 100,
+        owned: false
+    },
+    {
+        name: "Штурмовик",
+        baseSpeed: 6,
+        requiredLevel: 10,
+        cost: 250,
+        owned: false
+    },
+    {
+        name: "Сверхзвуковой истребитель",
+        baseSpeed: 9,
+        requiredLevel: 15,
+        cost: 500,
+        owned: false
+    }
+];
 
 // Самолёт
 const plane = {
@@ -18,7 +58,7 @@ const plane = {
     y: canvas.height - 100,
     width: 50,
     height: 30,
-    speed: 8
+    speed: 5 // Начальная слабая скорость
 };
 
 // Массив облаков
@@ -42,7 +82,7 @@ const keys = {
 
 // Переменная для контроля стрельбы
 let lastShotTime = 0;
-const shotCooldown = 200; // миллисекунды
+const baseShotCooldown = 250; // миллисекунды (медленнее на 1 уровне)
 
 // Функции для работы с общим счётом
 function loadTotalScore() {
@@ -56,6 +96,84 @@ function saveTotalScore(score) {
 
 // Загружаем общий счёт при запуске
 totalScore = loadTotalScore();
+
+// Функции для работы с уровнями
+function calculateLevel(totalScore) {
+    if (totalScore < 20) return 1;
+    if (totalScore < 50) return 2;
+    if (totalScore < 75) return 3;
+    if (totalScore < 100) return 4;
+    
+    // Для уровней 5+ каждые 50 очков = +1 уровень
+    return 5 + Math.floor((totalScore - 100) / 50);
+}
+
+function updatePlayerLevel() {
+    const newLevel = calculateLevel(totalScore);
+    if (newLevel > playerLevel) {
+        const oldLevel = playerLevel;
+        playerLevel = newLevel;
+        
+        // Показываем уведомление о новом уровне
+        showNotification(`🎉 Поздравляем! Достигнут ${playerLevel} уровень!`);
+        
+        // Предупреждение о появлении обычных облаков на 4 уровне
+        if (playerLevel === 4 && oldLevel < 4) {
+            setTimeout(() => {
+                showNotification(`⚠️ Внимание! С 4 уровня появляются облака, наносящие урон (-5 очков)!`, 4000);
+            }, 3000);
+        }
+        
+        // Разблокировка новых самолётов
+        if (playerLevel % 5 === 0 || playerLevel === 1 || playerLevel === 10) {
+            setTimeout(() => {
+                showNotification(`✈️ Проверьте ангар - возможно доступны новые самолёты!`, 3000);
+            }, 6000);
+        }
+    }
+    document.getElementById('playerLevel').textContent = playerLevel;
+}
+
+function updatePlaneStats() {
+    const currentPlaneData = planes[currentPlane];
+    plane.speed = currentPlaneData.baseSpeed + planeUpgrades.speed;
+}
+
+function showNotification(message, duration = 3000) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, duration);
+}
+
+// Загружаем улучшения и самолёты
+function loadGameData() {
+    const saved = localStorage.getItem('planeGameData');
+    if (saved) {
+        const data = JSON.parse(saved);
+        planeUpgrades = data.upgrades || { speed: 0, fireRate: 0 };
+        currentPlane = data.currentPlane || 0;
+        
+        // Загружаем владение самолётами
+        if (data.ownedPlanes) {
+            data.ownedPlanes.forEach((owned, index) => {
+                if (planes[index]) planes[index].owned = owned;
+            });
+        }
+    }
+}
+
+function saveGameData() {
+    const data = {
+        upgrades: planeUpgrades,
+        currentPlane: currentPlane,
+        ownedPlanes: planes.map(p => p.owned)
+    };
+    localStorage.setItem('planeGameData', JSON.stringify(data));
+}
 
 // Обработка нажатий клавиш
 document.addEventListener('keydown', (e) => {
@@ -120,6 +238,7 @@ function createNormalCloud() {
 // Функция создания пули
 function createBullet() {
     const currentTime = Date.now();
+    const shotCooldown = baseShotCooldown - (planeUpgrades.fireRate * 30);
     if (currentTime - lastShotTime > shotCooldown) {
         const bullet = {
             x: plane.x + plane.width / 2 - 2,
@@ -447,8 +566,8 @@ function update() {
         createCloud();
     }
     
-    // Создание обычных облаков
-    if (Math.random() < 0.01) {
+    // Создание обычных облаков (только с 4 уровня)
+    if (playerLevel >= 4 && Math.random() < 0.01) {
         createNormalCloud();
     }
     
@@ -567,6 +686,7 @@ function gameOver() {
     gameRunning = false;
     totalScore += score;
     saveTotalScore(totalScore);
+    updatePlayerLevel();
     finalScoreElement.textContent = score;
     document.getElementById('totalScore').textContent = totalScore;
     gameOverElement.style.display = 'block';
@@ -642,6 +762,129 @@ function buyPoints(amount) {
     alert(`Покупка ${amount} очков пока недоступна. Функция в разработке!`);
 }
 
+function showHangar() {
+    document.getElementById('dropdownMenu').style.display = 'none';
+    updateHangarDisplay();
+    document.getElementById('hangarModal').style.display = 'block';
+}
+
+function updateHangarDisplay() {
+    const planesGrid = document.getElementById('planesGrid');
+    planesGrid.innerHTML = '';
+    
+    planes.forEach((planeData, index) => {
+        const card = document.createElement('div');
+        card.className = 'plane-card';
+        
+        if (planeData.owned) {
+            card.classList.add('owned');
+        }
+        if (index === currentPlane) {
+            card.classList.add('selected');
+        }
+        
+        let buttonText = '';
+        let buttonAction = '';
+        
+        if (!planeData.owned) {
+            if (playerLevel >= planeData.requiredLevel) {
+                buttonText = `Купить за ${planeData.cost} очков`;
+                buttonAction = `onclick="buyPlane(${index})"`;
+            } else {
+                buttonText = `Требуется ${planeData.requiredLevel} уровень`;
+                buttonAction = 'disabled';
+            }
+        } else if (index !== currentPlane) {
+            buttonText = 'Выбрать';
+            buttonAction = `onclick="selectPlane(${index})"`;
+        } else {
+            buttonText = 'Выбран';
+            buttonAction = 'disabled';
+        }
+        
+        card.innerHTML = `
+            <h4>${planeData.name}</h4>
+            <p>Скорость: ${planeData.baseSpeed}</p>
+            <p>Требуется: ${planeData.requiredLevel} уровень</p>
+            <button ${buttonAction}>${buttonText}</button>
+        `;
+        
+        planesGrid.appendChild(card);
+    });
+    
+    document.getElementById('currentPlaneText').textContent = planes[currentPlane].name;
+}
+
+function buyPlane(index) {
+    const planeData = planes[index];
+    if (totalScore >= planeData.cost && playerLevel >= planeData.requiredLevel) {
+        totalScore -= planeData.cost;
+        planeData.owned = true;
+        saveTotalScore(totalScore);
+        saveGameData();
+        updateHangarDisplay();
+        document.getElementById('totalScore').textContent = totalScore;
+        showNotification(`✈️ ${planeData.name} куплен!`);
+    } else {
+        showNotification(`❌ Недостаточно очков или низкий уровень!`);
+    }
+}
+
+function selectPlane(index) {
+    if (planes[index].owned) {
+        currentPlane = index;
+        updatePlaneStats();
+        saveGameData();
+        updateHangarDisplay();
+        showNotification(`✈️ Выбран ${planes[index].name}!`);
+    }
+}
+
+function upgradeSpeed() {
+    const cost = 10 + (planeUpgrades.speed * 5);
+    if (totalScore >= cost) {
+        totalScore -= cost;
+        planeUpgrades.speed++;
+        saveTotalScore(totalScore);
+        saveGameData();
+        updatePlaneStats();
+        updateUpgradeCosts();
+        document.getElementById('totalScore').textContent = totalScore;
+        showNotification(`🚀 Скорость улучшена! (+${planeUpgrades.speed})`);
+    } else {
+        showNotification(`❌ Недостаточно очков!`);
+    }
+}
+
+function upgradeFireRate() {
+    const cost = 15 + (planeUpgrades.fireRate * 8);
+    if (totalScore >= cost) {
+        totalScore -= cost;
+        planeUpgrades.fireRate++;
+        saveTotalScore(totalScore);
+        saveGameData();
+        updateUpgradeCosts();
+        document.getElementById('totalScore').textContent = totalScore;
+        showNotification(`⚡ Скорострельность улучшена! (+${planeUpgrades.fireRate})`);
+    } else {
+        showNotification(`❌ Недостаточно очков!`);
+    }
+}
+
+function updateUpgradeCosts() {
+    document.getElementById('speedUpgradeCost').textContent = 10 + (planeUpgrades.speed * 5);
+    document.getElementById('fireRateUpgradeCost').textContent = 15 + (planeUpgrades.fireRate * 8);
+}
+
+function clearProgress() {
+    if (confirm('Вы уверены, что хотите удалить весь прогресс? Это действие нельзя отменить!')) {
+        localStorage.removeItem('planeGameTotalScore');
+        localStorage.removeItem('planeGameData');
+        localStorage.removeItem('bestScore');
+        location.reload();
+    }
+}
+
 // Закрытие меню при клике вне его
 document.addEventListener('click', function(event) {
     const menu = document.getElementById('dropdownMenu');
@@ -654,7 +897,7 @@ document.addEventListener('click', function(event) {
 
 // Закрытие модальных окон при клике вне их
 window.addEventListener('click', function(event) {
-    const modals = ['rulesModal', 'inventoryModal', 'leaderboardModal', 'shopModal'];
+    const modals = ['rulesModal', 'inventoryModal', 'leaderboardModal', 'shopModal', 'hangarModal'];
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (event.target === modal) {
@@ -664,6 +907,11 @@ window.addEventListener('click', function(event) {
 });
 
 // Инициализация интерфейса
+loadGameData();
+playerLevel = calculateLevel(totalScore);
+updatePlaneStats();
+updatePlayerLevel();
+updateUpgradeCosts();
 document.getElementById('totalScore').textContent = totalScore;
 
 // Показ правил при первом запуске
