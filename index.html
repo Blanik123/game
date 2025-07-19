@@ -170,12 +170,12 @@
              transform: scale(1.1);
          }
          
-         .menu-line {
-             width: 24px;
-             height: 3px;
+         .menu-square {
+             width: 16px;
+             height: 16px;
              background: #333;
-             margin: 4px auto;
-             border-radius: 2px;
+             margin: auto;
+             border-radius: 3px;
              transition: 0.3s;
              display: block;
          }
@@ -360,14 +360,65 @@
              margin-top: 0;
              color: #2E7D32;
          }
+         
+         /* Стили для вкладок */
+         .inventory-tabs {
+             display: flex;
+             border-bottom: 2px solid #eee;
+             margin-bottom: 20px;
+         }
+         
+         .tab-button {
+             flex: 1;
+             padding: 12px;
+             border: none;
+             background: #f5f5f5;
+             cursor: pointer;
+             transition: all 0.3s;
+             font-size: 16px;
+             font-weight: 500;
+         }
+         
+         .tab-button.active {
+             background: #4CAF50;
+             color: white;
+         }
+         
+         .tab-button:hover:not(.active) {
+             background: #e8e8e8;
+         }
+         
+         .tab-content {
+             animation: fadeIn 0.3s ease-in;
+         }
+         
+         @keyframes fadeIn {
+             from { opacity: 0; }
+             to { opacity: 1; }
+         }
+         
+         .telegram-info {
+             margin-top: 30px;
+             padding: 20px;
+             background: #e3f2fd;
+             border-radius: 10px;
+             border-left: 4px solid #2196F3;
+         }
+         
+         .telegram-info h3 {
+             margin-top: 0;
+             color: #1976D2;
+         }
+         
+         .telegram-info ol {
+             margin: 0;
+         }
     </style>
 </head>
 <body>
-    <!-- Меню в виде трех полосок -->
+    <!-- Меню в виде квадратика -->
     <div class="menu-button" id="menuButton" onclick="toggleMenu()">
-        <div class="menu-line"></div>
-        <div class="menu-line"></div>
-        <div class="menu-line"></div>
+        <div class="menu-square"></div>
     </div>
 
     <!-- Выпадающее меню -->
@@ -376,7 +427,6 @@
         <div class="menu-item" onclick="showInventory()">🎒 Инвентарь</div>
         <div class="menu-item" onclick="showLeaderboard()">🏆 Лидерборд</div>
         <div class="menu-item" onclick="showShop()">💰 Магазин</div>
-        <div class="menu-item" onclick="showHangar()">✈️ Ангар</div>
         <hr style="margin: 5px 0; border: 1px solid #eee;">
         <div class="menu-item" onclick="clearProgress()" style="color: #d32f2f;">🗑️ Удалить прогресс</div>
     </div>
@@ -425,13 +475,47 @@
         </div>
     </div>
 
-    <!-- Модальные окна для других разделов -->
+    <!-- Инвентарь с вкладками -->
     <div class="modal" id="inventoryModal">
-        <div class="modal-content">
+        <div class="modal-content inventory-content">
             <span class="close" onclick="closeModal('inventoryModal')">&times;</span>
             <h2>🎒 Инвентарь</h2>
-            <p>Здесь будут отображаться ваши достижения и предметы!</p>
-            <p><em>Функция в разработке...</em></p>
+            
+            <!-- Вкладки -->
+            <div class="inventory-tabs">
+                <button class="tab-button active" onclick="switchInventoryTab('hangar')">✈️ Ангар</button>
+                <button class="tab-button" onclick="switchInventoryTab('upgrades')">⬆️ Улучшения</button>
+            </div>
+            
+            <!-- Содержимое вкладок -->
+            <div class="tab-content" id="hangar-tab">
+                <h3>✈️ Ангар самолётов</h3>
+                <p>Текущий самолёт: <strong id="currentPlaneText2">Стартовый истребитель</strong></p>
+                <div class="planes-grid" id="planesGrid2">
+                    <!-- Самолёты будут добавлены через JavaScript -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="upgrades-tab" style="display: none;">
+                <h3>⬆️ Улучшения</h3>
+                <div class="upgrade-section" id="upgradeSection2">
+                    <div class="upgrade-item">
+                        <h4>🚀 Скорость (+1)</h4>
+                        <p>Стоимость: <span id="speedUpgradeCost2">10</span> очков</p>
+                        <button onclick="upgradeSpeed()">Улучшить</button>
+                    </div>
+                    <div class="upgrade-item">
+                        <h4>⚡ Скорострельность</h4>
+                        <p>Стоимость: <span id="fireRateUpgradeCost2">15</span> очков</p>
+                        <button onclick="upgradeFireRate()">Улучшить</button>
+                    </div>
+                    <div class="upgrade-item">
+                        <h4>🎯 Точность стрельбы</h4>
+                        <p>Стоимость: <span id="accuracyUpgradeCost">20</span> очков</p>
+                        <button onclick="upgradeAccuracy()">Улучшить</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -447,51 +531,45 @@
     <div class="modal" id="shopModal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('shopModal')">&times;</span>
-            <h2>💰 Магазин</h2>
-            <h3>💎 Очки</h3>
+            <h2>💰 Магазин очков</h2>
+            <p style="text-align: center; color: #666;">Покупки производятся через Telegram бота</p>
+            
             <div class="shop-items">
                 <div class="shop-item">
                     <h4>💎 100 очков</h4>
                     <p>Стоимость: $0.99</p>
-                    <button onclick="buyPoints(100)">Купить</button>
+                    <button onclick="buyPointsTelegram(100, 0.99)">Купить в Telegram</button>
                 </div>
                 <div class="shop-item">
                     <h4>💎 500 очков</h4>
                     <p>Стоимость: $3.99</p>
-                    <button onclick="buyPoints(500)">Купить</button>
+                    <button onclick="buyPointsTelegram(500, 3.99)">Купить в Telegram</button>
                 </div>
                 <div class="shop-item">
                     <h4>💎 1000 очков</h4>
                     <p>Стоимость: $6.99</p>
-                    <button onclick="buyPoints(1000)">Купить</button>
+                    <button onclick="buyPointsTelegram(1000, 6.99)">Купить в Telegram</button>
+                </div>
+                <div class="shop-item">
+                    <h4>💎 2500 очков</h4>
+                    <p>Стоимость: $14.99</p>
+                    <button onclick="buyPointsTelegram(2500, 14.99)">Купить в Telegram</button>
                 </div>
             </div>
-            <h3>⬆️ Улучшения стартового самолёта</h3>
-            <div class="upgrade-section" id="upgradeSection">
-                <div class="upgrade-item">
-                    <h4>🚀 Скорость (+1)</h4>
-                    <p>Стоимость: <span id="speedUpgradeCost">10</span> очков</p>
-                    <button onclick="upgradeSpeed()">Улучшить</button>
-                </div>
-                <div class="upgrade-item">
-                    <h4>⚡ Скорострельность</h4>
-                    <p>Стоимость: <span id="fireRateUpgradeCost">15</span> очков</p>
-                    <button onclick="upgradeFireRate()">Улучшить</button>
-                </div>
+            
+            <div class="telegram-info">
+                <h3>📱 Как купить через Telegram:</h3>
+                <ol>
+                    <li>Нажмите кнопку "Купить в Telegram"</li>
+                    <li>Вы будете перенаправлены в Telegram бота</li>
+                    <li>Следуйте инструкциям бота для оплаты</li>
+                    <li>Очки автоматически зачислятся в игру</li>
+                </ol>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="hangarModal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('hangarModal')">&times;</span>
-            <h2>✈️ Ангар самолётов</h2>
-            <p>Текущий самолёт: <strong id="currentPlaneText">Стартовый истребитель</strong></p>
-            <div class="planes-grid" id="planesGrid">
-                <!-- Самолёты будут добавлены через JavaScript -->
-            </div>
-        </div>
-    </div>
+
 
     <!-- Уведомления -->
     <div class="notification" id="notification"></div>
